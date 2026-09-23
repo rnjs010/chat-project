@@ -1,12 +1,18 @@
-package com.kkr.chat.domain;
+package com.kkr.chat.entity;
 
+import jakarta.persistence.*;
+
+@Entity
+@Table(name = "chat_room")
 public class ChatRoom {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     private String name;
 
-    public ChatRoom(Long id, String name) {
-        this.id = id;
-        this.name = name;
+    protected ChatRoom() {
     }
 
     public ChatRoom(String name) {

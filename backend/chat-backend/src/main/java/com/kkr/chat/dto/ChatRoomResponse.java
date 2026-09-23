@@ -1,6 +1,6 @@
 package com.kkr.chat.dto;
 
-import com.kkr.chat.domain.ChatRoom;
+import com.kkr.chat.entity.ChatRoom;
 
 public class ChatRoomResponse {
     private Long id;
