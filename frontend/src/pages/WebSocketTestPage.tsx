@@ -4,17 +4,17 @@ import MessageList from "../components/websocket/MessageList";
 import type {
   ChatMessage,
   ConnectionStatus as ConnectionStatusType,
+  WebSocketMessage,
 } from "../types/websocket";
 
-const WS_URL = "ws://192.168.45.20:8080/ws/chat";
+const WS_BASE_URL = "ws://192.168.45.20:8080/ws/chat";
 
 export default function WebSocketTestPage() {
   const socketRef = useRef<WebSocket | null>(null);
 
   const [status, setStatus] = useState<ConnectionStatusType>("DISCONNECTED");
-
+  const [roomId, setRoomId] = useState(1);
   const [message, setMessage] = useState("");
-
   const [messages, setMessages] = useState<ChatMessage[]>([]);
 
   const connect = () => {
@@ -24,7 +24,7 @@ export default function WebSocketTestPage() {
 
     setStatus("CONNECTING");
 
-    const socket = new WebSocket(WS_URL);
+    const socket = new WebSocket(WS_BASE_URL + `/${roomId}`);
 
     socketRef.current = socket;
 
@@ -33,14 +33,20 @@ export default function WebSocketTestPage() {
     };
 
     socket.onmessage = (event) => {
-      const receivedMessage: ChatMessage = {
-        id: Date.now() + Math.random(),
-        content: event.data,
-        sender: "OTHER",
-        timestamp: new Date().toLocaleTimeString(),
-      };
+      try {
+        const receivedMessage: WebSocketMessage = JSON.parse(event.data);
 
-      setMessages((prev) => [...prev, receivedMessage]);
+        const receivedUiMessage: ChatMessage = {
+          id: Date.now() + Math.random(),
+          content: receivedMessage.content,
+          sender: "OTHER",
+          timestamp: new Date().toLocaleTimeString(),
+        };
+
+        setMessages((prev) => [...prev, receivedUiMessage]);
+      } catch (error) {
+        console.error("메시지 파싱 실패", error);
+      }
     };
 
     socket.onerror = () => {
@@ -66,8 +72,17 @@ export default function WebSocketTestPage() {
       return;
     }
 
-    socketRef.current.send(message);
+    const chatMessage: WebSocketMessage = {
+      roomId,
+      type: "CHAT",
+      content: message,
+    };
 
+    socketRef.current.send(JSON.stringify(chatMessage));
+
+    /*
+     * Raw WebSocket에서는 내가 보낸 메시지를 즉시 화면에 표시
+     */
     const sentMessage: ChatMessage = {
       id: Date.now(),
       content: message,
@@ -76,7 +91,6 @@ export default function WebSocketTestPage() {
     };
 
     setMessages((prev) => [...prev, sentMessage]);
-
     setMessage("");
   };
 
@@ -86,14 +100,25 @@ export default function WebSocketTestPage() {
         <header className="chat-header">
           <div>
             <span className="chat-label">WEBSOCKET TEST</span>
-
             <h1>실시간 메시지 테스트</h1>
-
-            <p>Raw WebSocket 기반의 실시간 통신을 테스트합니다.</p>
+            <p>Raw WebSocket 기반의 실시간 통신 테스트</p>
           </div>
 
           <ConnectionStatus status={status} />
         </header>
+
+        <div className="room-selector">
+          <span>채팅방</span>
+
+          <select
+            value={roomId}
+            disabled={status === "CONNECTED"}
+            onChange={(event) => setRoomId(Number(event.target.value))}
+          >
+            <option value={1}>Room 1</option>
+            <option value={2}>Room 2</option>
+          </select>
+        </div>
 
         <div className="chat-body">
           <MessageList messages={messages} />
