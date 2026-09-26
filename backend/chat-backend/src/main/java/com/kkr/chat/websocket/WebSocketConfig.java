@@ -16,10 +16,8 @@ public class WebSocketConfig implements WebSocketConfigurer {
     }
 
     @Override
-    public void registerWebSocketHandlers(
-            WebSocketHandlerRegistry registry
-    ) {
-        registry.addHandler(chatWebSocketHandler, "/ws/chat")
+    public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
+        registry.addHandler(chatWebSocketHandler, "/ws/chat/{roomId}")
                 .setAllowedOrigins(
                         "http://localhost:5173",
                         "http://192.168.45.20:5173"
